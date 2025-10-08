@@ -4,11 +4,9 @@ from agno.models.openai import OpenAIChat
 from agno.knowledge import Knowledge
 from agno.tools.knowledge import KnowledgeTools
 from agno.knowledge.reader.docx_reader import DocxReader
-from agno.tools.file import FileTools
 from pathlib import Path
 from agno.vectordb.chroma import ChromaDb
 from agno.db.sqlite import SqliteDb
-from agno.knowledge.chunking.document import DocumentChunking
 from agno.knowledge.chunking.fixed import FixedSizeChunking
 
 load_dotenv()
@@ -35,7 +33,7 @@ base_conhecimento = Knowledge(
 base_conhecimento.add_content(path=str(doc_path), reader=reader, skip_if_exists=True)
 agente_transporte = Agent(model=OpenAIChat(id="gpt-4o-mini"),markdown=True,stream=True,
                         tools=[KnowledgeTools(knowledge=base_conhecimento)], 
-                        instructions="Responda somente com base na base de conhecimento carregada. NENHUMA RESPOSTA DEVE SER DADA QUE NÃO SEJA RELACIONADA A BASE DE CONHECIMENTO")
+                        instructions="Responda somente com base na base de conhecimento carregada.")
 while True:
     pergunta = input("Insira sua pergunta!\n")
 
