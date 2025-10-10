@@ -11,28 +11,40 @@ from agno.knowledge.reader.docx_reader import DocxReader
 from agno.models.openai import OpenAIChat
 from agno.vectordb.chroma import ChromaDb
 
-COLLECTION = "docx_agent"
+DATA_DIR = Path("data")
 VECTOR_PATH = Path("tmp/chromadb")
-DOC_PATH = Path("RESOLUÇÃO Nº 5867-2020.docx")
-DOC_LABEL = "Resolução 5867-2020"
+COLLECTION = "docx_agent"
 
-async def ensure_doc_loaded(knowledge: Knowledge) -> None:
-    reader = DocxReader(chunking_strategy=FixedSizeChunking(chunk_size=1000, overlap=200))
-    await knowledge.add_content_async(
-        name=DOC_LABEL,
-        path=str(DOC_PATH),
-        reader=reader,
-        skip_if_exists=True,
-    )
 
-def ensure_doc_loaded_sync(knowledge: Knowledge) -> None:
-    asyncio.run(ensure_doc_loaded(knowledge))    
+async def ensure_knowledge_loaded(
+    knowledge: Knowledge,
+    directory: Path = DATA_DIR,
+    chunk_size: int = 1000,
+    overlap: int = 200,
+) -> None:
+    reader = DocxReader(chunking_strategy=FixedSizeChunking(chunk_size=chunk_size, overlap=overlap))
+    doc_paths = sorted(directory.glob("*.docx"))
+    if not doc_paths:
+        raise FileNotFoundError(f"Nenhum .docx encontrado em {directory.resolve()}")
+
+    for doc_path in doc_paths:
+        label = doc_path.stem  # usa o nome do arquivo como rótulo
+        await knowledge.add_content_async(
+            name=label,
+            path=str(doc_path),
+            reader=reader,
+            skip_if_exists=True,          # evita reprocesso se já estiver indexado
+            metadata={"source_file": doc_path.name},
+        )
+
+def ensure_knowledge_loaded_sync(knowledge: Knowledge) -> None:
+    asyncio.run(ensure_knowledge_loaded(knowledge))   
 
 def build_agent(*, preload_knowledge: bool = True) -> Agent:
     load_dotenv()
     knowledge = Knowledge(vector_db=ChromaDb(collection=COLLECTION, path=str(VECTOR_PATH)))
     if preload_knowledge:
-        ensure_doc_loaded_sync(knowledge)
+        ensure_knowledge_loaded_sync(knowledge)
     db = SqliteDb(db_file="tmp/data.db")
     return Agent(
         name="Assistente",
