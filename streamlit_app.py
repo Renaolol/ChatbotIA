@@ -7,12 +7,14 @@ from dotenv import load_dotenv
 from openai_agent import build_agent
 
 
+# Mantém uma única instância do agente ao longo da sessão
 @st.cache_resource(show_spinner="Inicializando agente...")
 def get_agent():
     return build_agent()
 
 
 def _parse_credentials(raw: str) -> Dict[str, str]:
+    # Converte a string do .env (usuario:senha;...) para um dicionário consultável
     credentials: Dict[str, str] = {}
     if not raw:
         return credentials
@@ -27,6 +29,7 @@ def _parse_credentials(raw: str) -> Dict[str, str]:
 
 
 def require_authentication(credentials: Dict[str, str]) -> None:
+    # Interrompe a interface ate que uma credencial valida seja informada
     if not credentials:
         st.error("Nenhum usuário configurado. Defina APP_USERS no .env (ex.: usuario:senha;admin:1234).")
         st.stop()
@@ -56,6 +59,7 @@ def require_authentication(credentials: Dict[str, str]) -> None:
 
 
 def maybe_logout() -> None:
+    # Controla o botão de logout e reseta estado da sessão
     if st.sidebar.button("Sair"):
         st.session_state.auth_status = False
         st.session_state.auth_user = None
@@ -63,6 +67,7 @@ def maybe_logout() -> None:
         st.rerun()
 
 
+# Carrega variáveis de ambiente definidas pelo .env
 load_dotenv()
 USER_CREDENTIALS = _parse_credentials(os.getenv("APP_USERS", ""))
 
@@ -79,11 +84,13 @@ agent = get_agent()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# Reproduz todo o histórico armazenado antes de renderizar a entrada atual
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 if prompt := st.chat_input("Digite sua pergunta"):
+    # Registra a mensagem do usuario e consulta o agente com o texto fornecido
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)

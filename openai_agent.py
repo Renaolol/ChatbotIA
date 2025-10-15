@@ -11,9 +11,9 @@ from agno.knowledge.reader.docx_reader import DocxReader
 from agno.models.openai import OpenAIChat
 from agno.vectordb.chroma import ChromaDb
 
-DATA_DIR = Path("data")
-VECTOR_PATH = Path("tmp/chromadb")
-COLLECTION = "docx_agent"
+DATA_DIR = Path("data")  # Diretório padrão com os arquivos DOCX de referência
+VECTOR_PATH = Path("tmp/chromadb")  # Local onde o ChromaDB persiste os vetores
+COLLECTION = "docx_agent"  # Nome da coleção de conhecimento
 
 
 async def ensure_knowledge_loaded(
@@ -22,6 +22,7 @@ async def ensure_knowledge_loaded(
     chunk_size: int = 1000,
     overlap: int = 200,
 ) -> None:
+    # Varre a pasta de documentos e envia cada arquivo para o repositório vetorial
     reader = DocxReader(chunking_strategy=FixedSizeChunking(chunk_size=chunk_size, overlap=overlap))
     doc_paths = sorted(directory.glob("*.docx"))
     if not doc_paths:
@@ -38,12 +39,15 @@ async def ensure_knowledge_loaded(
         )
 
 def ensure_knowledge_loaded_sync(knowledge: Knowledge) -> None:
+    # Interface síncrona para uso em contextos não assíncronos
     asyncio.run(ensure_knowledge_loaded(knowledge))   
 
 def build_agent(*, preload_knowledge: bool = True) -> Agent:
+    # Cria o agente configurando modelo, memória e base de conhecimento
     load_dotenv()
     knowledge = Knowledge(vector_db=ChromaDb(collection=COLLECTION, path=str(VECTOR_PATH)))
     if preload_knowledge:
+        # Alimenta o vetor de conhecimento antes de iniciar o chat
         ensure_knowledge_loaded_sync(knowledge)
     db = SqliteDb(db_file="tmp/data.db")
     return Agent(
