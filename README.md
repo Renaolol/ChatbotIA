@@ -47,9 +47,9 @@ Este projeto implementa um chatbot especializado em legislação de transporte, 
 1. Certifique-se de que o `.env` está preenchido e os documentos indexados.
 2. Rode o app Streamlit:
    ```bash
-   streamlit run streamlit_app.py
+   streamlit run streamlit_app.py --server.port=801
    ```
-3. Acesse a URL que o Streamlit indicar (por padrão `http://localhost:8501`).
+3. Acesse a URL que o Streamlit indicar (por padrão `http://localhost:801`).
 4. Informe usuário e senha configurados em `APP_USERS`. Após login bem-sucedido, o chatbot fica disponível para consultas.
 
 ## 🚢 Executando com Docker
@@ -61,7 +61,7 @@ O repositório inclui um `Dockerfile` pronto para publicação em serviços como
    ```
 2. **Execute o container** apontando para os diretórios de dados e definindo as variáveis de ambiente:
    ```bash
-   docker run -p 8501:8501 \
+   docker run -p 801:801 \
      -e OPENAI_API_KEY=seu_token_openai \
      -e APP_USERS="usuario:senha;outro:senha2" \
      -v /caminho/para/data:/app/data \
@@ -70,7 +70,7 @@ O repositório inclui um `Dockerfile` pronto para publicação em serviços como
    ```
    - Monte `data/` com os `.docx` e `tmp/` para persistir embeddings/banco entre reinícios.
    - Em painéis como o EasyPanel, basta criar o app, informar as variáveis de ambiente e mapear os volumes para essas pastas.
-3. Acesse `http://<host>:8501` para interagir com o chatbot.
+3. Acesse `http://<host>:801` para interagir com o chatbot.
 
 ## 🔐 Fluxo de Login
 - O formulário de autenticação é exibido antes de qualquer interação com o agente.
